@@ -1,0 +1,21 @@
+<apex:page controller="MirrorAuthController" action="{!doAuth}">
+    <apex:pageBlock >
+        <apex:pageBlockSection >
+            <apex:outputText >
+                Completing login...
+            </apex:outputText>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection >
+            <apex:outputText value="token: {!token}" />
+        </apex:pageBlockSection>
+        <apex:pageBlockSection >
+            <apex:outputText value="jwtClaimSet: {!jwtClaimSet}" />
+        </apex:pageBlockSection>
+        <apex:pageBlockSection >
+            <apex:outputText value="jwtSignature: {!jwtSignature}" />
+        </apex:pageBlockSection>
+        <apex:pageBlockSection >
+            <apex:outputText value="jwt: {!jwt}" />
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+</apex:page>

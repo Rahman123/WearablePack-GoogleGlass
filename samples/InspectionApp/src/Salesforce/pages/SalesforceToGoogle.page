@@ -1,0 +1,18 @@
+<apex:page controller="SalesforceTokenParser">
+    <apex:pageBlock >
+        <apex:pageBlockSection >
+            <apex:outputText >
+                Completing login...
+            </apex:outputText>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection >
+            <apex:outputText value="access_token: {!access_token}" />
+        </apex:pageBlockSection>
+        <apex:pageBlockSection >
+            <apex:outputText value="refresh_token: {!refresh_token}" />
+        </apex:pageBlockSection>
+        <apex:pageBlockSection >
+            <apex:outputText value="Mirror API Response: {!mirrorResponse}" />
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+</apex:page>

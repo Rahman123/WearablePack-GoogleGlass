@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>InspectionApp</fullName>
+    <types>
+        <members>AuthorizeSalesforceController</members>
+        <members>MirrorAuthController</members>
+        <members>SalesforceTokenParser</members>
+        <members>SignServer</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>AuthorizeSalesforce</members>
+        <members>SalesforceToGoogle</members>
+        <members>TestMirrorOauth</members>
+        <name>ApexPage</name>
+    </types>
+    <types>
+        <members>PhotoUpload</members>
+        <name>ApexTrigger</name>
+    </types>
+    <types>
+        <members>GlassSettings__c.App_Email__c</members>
+        <members>GlassSettings__c.App_Id__c</members>
+        <members>GlassSettings__c.Consumer_Key__c</members>
+        <members>GlassSettings__c.Consumer_Secret__c</members>
+        <members>GlassSettings__c.Redirect_URL__c</members>
+        <members>Inspection_Response__c.Inspection__c</members>
+        <members>Inspection_Response__c.Responder__c</members>
+        <members>Inspection_Response__c.Status__c</members>
+        <members>Inspection_Site__c.Address__c</members>
+        <members>Inspection_Site__c.Location__c</members>
+        <members>Inspection_Step_Response__c.Answer__c</members>
+        <members>Inspection_Step_Response__c.Inspection_Item__c</members>
+        <members>Inspection_Step_Response__c.Inspection_Response__c</members>
+        <members>Inspection_Step__c.Image__c</members>
+        <members>Inspection_Step__c.Inspection__c</members>
+        <members>Inspection_Step__c.Order__c</members>
+        <members>Inspection_Step__c.Photo__c</members>
+        <members>Inspection_Step__c.Question__c</members>
+        <members>Inspection_Step__c.Required__c</members>
+        <members>Inspection_Step__c.Type__c</members>
+        <members>Inspection_Step__c.isActive__c</members>
+        <members>Inspection__c.Description__c</members>
+        <members>Inspection__c.Site__c</members>
+        <members>Inspection__c.isActive__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>GlassSettings__c</members>
+        <members>Inspection_Response__c</members>
+        <members>Inspection_Site__c</members>
+        <members>Inspection_Step_Response__c</members>
+        <members>Inspection_Step__c</members>
+        <members>Inspection__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Inspection_Response__c</members>
+        <members>Inspection_Site__c</members>
+        <members>Inspection__c</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
+        <members>Inspection_Response__c-Inspection Response Layout</members>
+        <members>Inspection_Site__c-Site Layout</members>
+        <members>Inspection_Step_Response__c-Inspection Item Response Layout</members>
+        <members>Inspection_Step__c-Inspection Item Layout</members>
+        <members>Inspection__c-Inspection Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
+        <members>Inspection_Response__c.All</members>
+        <members>Inspection_Site__c.All</members>
+        <members>Inspection_Step_Response__c.All</members>
+        <members>Inspection_Step__c.All</members>
+        <members>Inspection__c.All</members>
+        <name>ListView</name>
+    </types>
+    <types>
+        <members>Google_APIs</members>
+        <members>Google_OAuth</members>
+        <members>Heroku_SHA256_signing_server</members>
+        <name>RemoteSiteSetting</name>
+    </types>
+    <version>30.0</version>
+</Package>

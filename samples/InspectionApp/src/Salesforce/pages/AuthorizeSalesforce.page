@@ -1,0 +1,5 @@
+<apex:page controller="AuthorizeSalesforceController" action="{!doRedirect}" >
+    <apex:outputText >
+        Redirecting you to Salesforce login. One moment please.
+    </apex:outputText>
+</apex:page>
