@@ -130,3 +130,28 @@ After a successful call, the JSON (or bitmap) payload is returned to the activit
 
 Finally, data is submitted back to the Inspection_Response and Inspection_Step_Response objects using the SalesforceObjectSerializer Java class.
 
+## Glass Setup
+
+During development, the Glass app may be sideloaded onto Google Glass using adb, assuming that a valid refresh token is temporarily hard-coded as suggested above. This allows the main interaction and content to be developed without having to submit an APK to Google.
+
+Make sure that the Glass hardware is in debug mode. To do this, go to the Settings card, select Device Info, scroll over to Debug Mode, and tap to turn it on.
+
+Finally, use the latest version of adb, available in the latest version of Google's Android SDK, since older versions may not recognize Glass as a connected device. Currently, the newest available version of adb is 1.0.31. To connect the Glass hardware, use the USB cable to plug Glass into your computer, and issue the following terminal commands:
+
+...
+adb kill-server
+adb start-server
+adb devices
+...
+
+This will show a listing of currently connected devices, with Glass showing up as a generic device. At this point, you can install your APK as follows:
+
+...
+adb install -r YourAPKName.apk
+...
+
+The -r flag automatically replaces any previous version of your APK that may be installed. Once the APK is installed, it can be launched from the OK Glass menu with the command "Show me a demo".
+
+
+
+
