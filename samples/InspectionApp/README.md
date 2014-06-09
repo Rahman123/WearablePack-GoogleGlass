@@ -1,4 +1,4 @@
-# Inspection sample app for Google Glass
+# Inspection Sample App for Google Glass
 
 Google Glass is the most advanced wearable available today: an always-on, head-mounted display, controlled by voice commands and a touchpad. The device runs Android KitKat on an embedded CPU, and currently receives firmware updates over the air from Google at the rate of about one per week -- it is a rapidly evolving platform. It can also be paired with an Android smartphone to receive supplementary sensor data such as GPS.
 
@@ -30,7 +30,7 @@ In a traditional Google Glass environment, a user would register their glassware
 
 The standard [Salesforce OAuth 2.0 flow](https://developer.salesforce.com/page/Digging_Deeper_into_OAuth_2.0_on_Force.com) does not accept a "userToken" variable, so we could not use that as the authorization URL when configuring the glassware. However, the Salesforce OAuth 2.0 flow does accept a "state" variable, which is a general-purpose variable that can be used to pass values back and forth during the authentication process. 
 
-As a solution, the authorization URL we have configured for the glassware is an intermediate Sites Visualforce landing page (in our case, glass-developer-edition.na10.force.com/glassauth). Google appends the user token to this URL at the start of the authorization flow. 
+As a solution, the authorization URL we have configured for the glassware as an intermediate Sites Visualforce landing page (in our case, glass-developer-edition.na10.force.com/glassauth). Google appends the user token to this URL at the start of the authorization flow. 
 
 Once the user token value has been captured, the user is redirected automatically to the standard Salesforce login page, with the user token stored in the Salesforce state variable. After the user authorizes the app with Salesforce, they are redirected to a landing page that receives the authorization code from Salesforce (part of the [web-server OAuth 2.0 flow](https://help.salesforce.com/HTViewHelpDoc?id=remoteaccess_oauth_web_server_flow.htm&language=en_US)). This code is then exchanged for access and refresh tokens from Salesforce using a standard REST request.
 
@@ -42,7 +42,7 @@ After it is signed, the token request is sent to Google. Google returns an acces
 
 
 
-## Salesforce integration
+## Salesforce Integration
 
 The Glassware leverages the standard [Salesforce REST APIs](https://www.salesforce.com/us/developer/docs/api_rest/) to retrieve and submit data. SOQL queries submitted via the REST interface are used to retrieve from the server all data required by the app. The JSON response is manually parsed into Java model objects for use within the app.
 
