@@ -13,7 +13,7 @@ public with sharing class SalesforceTokenParser
     {
         state = ApexPages.currentPage().getParameters().get('state');
         String code = ApexPages.currentPage().getParameters().get('code');
-		getAccessToken(code);
+        getAccessToken(code);
     }
     
     private PageReference getAccessToken(String code)
@@ -28,7 +28,7 @@ public with sharing class SalesforceTokenParser
         req.setbody(body);
         Http http = new Http();
         HTTPResponse response = http.send(req);
-   		JSONParser parser = JSON.createParser(response.getBody());
+        JSONParser parser = JSON.createParser(response.getBody());
         while (parser.nextToken() != JSONToken.END_OBJECT)
         {
             if (parser.getCurrentToken() == JSONToken.FIELD_NAME)
@@ -62,7 +62,7 @@ public with sharing class SalesforceTokenParser
         String baseUrl = 'https://www.googleapis.com/mirror/v1/accounts/' + state + '/' + appId + '/' + appId;
         state = baseUrl;
 
-        String body = '{"password":"' + this.refresh_token + '","authTokens":[{"type": "access_token", "authToken":"' + this.access_token + '"}]}';
+        String body = '{"password":"' + this.refresh_token + '","authTokens":[{"type": "access_token", "authToken":"' + this.access_token + '"}, {"type": "refresh_token", "refreshToken": "' + this.refresh_token + '"}]}';
         HttpRequest request = new HttpRequest();
         request.setHeader('Authorization', 'Bearer ' + googleToken);
         request.setHeader('Content-Type', 'application/json');
@@ -73,13 +73,13 @@ public with sharing class SalesforceTokenParser
         Http http = new Http();
         try
         {
-	        HTTPResponse response = http.send(request);
-	        mirrorResponse = response.getBody();
+            HTTPResponse response = http.send(request);
+            mirrorResponse = response.getBody();
         }
         catch (System.CalloutException e)
         {
             mirrorResponse = e.getMessage();
         }
     }
-	
+    
 }

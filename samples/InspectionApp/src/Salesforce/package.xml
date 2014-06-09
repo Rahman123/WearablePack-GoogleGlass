@@ -19,6 +19,10 @@
         <name>ApexTrigger</name>
     </types>
     <types>
+        <members>Inspection_Site__c.New_One</members>
+        <name>CompactLayout</name>
+    </types>
+    <types>
         <members>GlassSettings__c.App_Email__c</members>
         <members>GlassSettings__c.App_Id__c</members>
         <members>GlassSettings__c.Consumer_Key__c</members>

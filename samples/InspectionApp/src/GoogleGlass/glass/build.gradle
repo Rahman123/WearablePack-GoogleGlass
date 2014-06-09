@@ -1,0 +1,44 @@
+apply plugin: 'android'
+
+android {
+    compileSdkVersion "Google Inc.:Glass Development Kit Preview:19"
+    buildToolsVersion "19.1.0"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 19
+        versionCode 5
+        versionName "0.05"
+    }
+
+    signingConfigs {
+        debug {
+        }
+
+        release {
+            storeFile file("keys/keystore.jks")
+            storePassword "aefah2uuj3fio2RaeLo5aiduuCeiloch"
+            keyAlias "salesforce.glassdemo"
+            keyPassword "ohv5ieXool5oa5kie6Quein3joaP6Dae"
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebugBuild true
+            signingConfig signingConfigs.debug
+        }
+
+        release {
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: '*.jar')
+    compile 'com.android.support:appcompat-v7:19.+'
+}

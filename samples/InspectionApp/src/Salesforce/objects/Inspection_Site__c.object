@@ -44,7 +44,13 @@
         <actionName>View</actionName>
         <type>Default</type>
     </actionOverrides>
-    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <compactLayoutAssignment>New_One</compactLayoutAssignment>
+    <compactLayouts>
+        <fullName>New_One</fullName>
+        <fields>Name</fields>
+        <fields>Location__c</fields>
+        <label>New One</label>
+    </compactLayouts>
     <deploymentStatus>Deployed</deploymentStatus>
     <enableActivities>false</enableActivities>
     <enableFeeds>false</enableFeeds>
@@ -79,6 +85,23 @@
         <type>Text</type>
     </nameField>
     <pluralLabel>Inspection Sites</pluralLabel>
-    <searchLayouts/>
+    <searchLayouts>
+        <customTabListAdditionalFields>Address__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>0BCF00000004Cmj</customTabListAdditionalFields>
+        <customTabListAdditionalFields>0BCF00000004Cmk</customTabListAdditionalFields>
+        <lookupDialogsAdditionalFields>Address__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>0BCF00000004Cmj</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>0BCF00000004Cmk</lookupDialogsAdditionalFields>
+        <lookupPhoneDialogsAdditionalFields>Address__c</lookupPhoneDialogsAdditionalFields>
+        <lookupPhoneDialogsAdditionalFields>0BCF00000004Cmj</lookupPhoneDialogsAdditionalFields>
+        <lookupPhoneDialogsAdditionalFields>0BCF00000004Cmk</lookupPhoneDialogsAdditionalFields>
+        <searchFilterFields>NAME</searchFilterFields>
+        <searchFilterFields>Address__c</searchFilterFields>
+        <searchFilterFields>0BCF00000004Cmj</searchFilterFields>
+        <searchFilterFields>0BCF00000004Cmk</searchFilterFields>
+        <searchResultsAdditionalFields>Address__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>0BCF00000004Cmj</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>0BCF00000004Cmk</searchResultsAdditionalFields>
+    </searchLayouts>
     <sharingModel>ReadWrite</sharingModel>
 </CustomObject>

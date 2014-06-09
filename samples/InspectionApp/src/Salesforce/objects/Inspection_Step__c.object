@@ -118,11 +118,11 @@
         <label>Type</label>
         <picklist>
             <picklistValues>
-                <fullName>Yes/No</fullName>
+                <fullName>Affirmative/Negative</fullName>
                 <default>false</default>
             </picklistValues>
             <picklistValues>
-                <fullName>Pass/Fail</fullName>
+                <fullName>Success/Failure</fullName>
                 <default>false</default>
             </picklistValues>
             <picklistValues>

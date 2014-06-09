@@ -49,6 +49,9 @@
         <style>CustomLinks</style>
     </layoutSections>
     <relatedLists>
+        <relatedList>RelatedNoteList</relatedList>
+    </relatedLists>
+    <relatedLists>
         <fields>NAME</fields>
         <fields>Inspection_Step__c.Question__c</fields>
         <fields>Answer__c</fields>

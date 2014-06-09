@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- TODO Icons for StartInspection menu -->
+<!-- TODO Strings for StartInspection menu -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/inspect"
+        android:title="Start an Inspection"
+        />
+
+    <item
+        android:id="@+id/tilt_test"
+        android:title="Tilt Test"
+        />
+
+    <item
+        android:id="@+id/hotword"
+        android:title="Hotword"
+        />
+
+    <item
+        android:id="@+id/video"
+        android:title="Video"
+        />
+</menu>
