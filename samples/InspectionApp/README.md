@@ -138,17 +138,13 @@ Make sure that the Glass hardware is in debug mode. To do this, go to the Settin
 
 Finally, use the latest version of adb, available in the latest version of Google's Android SDK, since older versions may not recognize Glass as a connected device. Currently, the newest available version of adb is 1.0.31. To connect the Glass hardware, use the USB cable to plug Glass into your computer, and issue the following terminal commands:
 
-...
-adb kill-server
-adb start-server
-adb devices
-...
+    adb kill-server
+    adb start-server
+    adb devices
 
 This will show a listing of currently connected devices, with Glass showing up as a generic device. At this point, you can install your APK as follows:
 
-...
-adb install -r YourAPKName.apk
-...
+    adb install -r YourAPKName.apk
 
 The -r flag automatically replaces any previous version of your APK that may be installed. Once the APK is installed, it can be launched from the OK Glass menu with the command "Show me a demo".
 
