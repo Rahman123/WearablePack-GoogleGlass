@@ -12,6 +12,4 @@ The Wear Pack for Google Glass includes a sample inspection app that walks field
 This sample application is part of the <a href="http://developer.salesforce.com/wear" target="_blank">Salesforce Wear Developer Pack</a>, a collection of open-source starter apps that let you quickly design and build wearable apps that connect to the Salesforce1 Platform. 
 
 
-Getting Started
---------
-Please refer to the <a href="https://github.com/developerforce/WearablePack-GoogleGlass/blob/master/samples/InspectionApp/README.md" target="_blank">getting started guide</a> for details on how to run and test the app and about the underlying app architecture and code.
+Please refer to the <a href="https://github.com/developerforce/WearablePack-GoogleGlass/blob/master/samples/InspectionApp/README.md" target="_blank">readme</a> for details on the underlying application architecture and code.
