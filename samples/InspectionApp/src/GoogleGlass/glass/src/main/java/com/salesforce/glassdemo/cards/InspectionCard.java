@@ -20,10 +20,6 @@ public class InspectionCard extends Card {
             Log.e(Constants.TAG, "Inspection has no steps");
             setFootnote("No steps");
         }
-        //if (site.imageUrl != null && !site.imageUrl.isEmpty()) {
-        //    setImageLayout(ImageLayout.FULL);
-        //    new DownloadImageTask(this).execute(site.imageUrl);
-        //}
     }
 
     protected InspectionCard(Context context) {

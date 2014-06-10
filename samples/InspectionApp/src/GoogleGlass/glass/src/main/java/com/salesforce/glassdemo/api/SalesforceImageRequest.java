@@ -1,6 +1,6 @@
 package com.salesforce.glassdemo.api;
 
-import android.content.Context;
+import android.app.Activity;
 import android.graphics.Bitmap;
 
 import com.android.volley.AuthFailureError;
@@ -12,9 +12,9 @@ import java.util.Map;
 
 public class SalesforceImageRequest extends ImageRequest {
 
-    private Context mContext;
+    private Activity mContext;
 
-    public SalesforceImageRequest(Context context, String url, Response.Listener<Bitmap> listener, int maxWidth, int maxHeight, Bitmap.Config decodeConfig, Response.ErrorListener errorListener) {
+    public SalesforceImageRequest(Activity context, String url, Response.Listener<Bitmap> listener, int maxWidth, int maxHeight, Bitmap.Config decodeConfig, Response.ErrorListener errorListener) {
         super(url, listener, maxWidth, maxHeight, decodeConfig, errorListener);
         mContext = context;
     }

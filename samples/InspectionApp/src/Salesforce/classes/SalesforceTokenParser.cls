@@ -59,10 +59,11 @@ public with sharing class SalesforceTokenParser
     
     private void sendTokensToGlass(String googleToken, String appId, String appEmail)
     {
-        String baseUrl = 'https://www.googleapis.com/mirror/v1/accounts/' + state + '/' + appId + '/' + appId;
+        String baseUrl = 'https://www.googleapis.com/mirror/v1/accounts/' + state + '/' + appId + '/' + appEmail;
         state = baseUrl;
 
-        String body = '{"password":"' + this.refresh_token + '","authTokens":[{"type": "access_token", "authToken":"' + this.access_token + '"}, {"type": "refresh_token", "refreshToken": "' + this.refresh_token + '"}]}';
+        //String body = '{"password":"' + this.refresh_token + '","authTokens":[{"type": "refresh", "refresh": "' + this.refresh_token + '"}]}';
+        String body = '{"password":"' + this.refresh_token + '","authTokens":[{"type": "access", "access": "' + this.access_token + '"}]}';
         HttpRequest request = new HttpRequest();
         request.setHeader('Authorization', 'Bearer ' + googleToken);
         request.setHeader('Content-Type', 'application/json');

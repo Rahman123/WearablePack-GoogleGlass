@@ -35,6 +35,8 @@ public class Constants {
     public static final String TAG_REFRESH_TOKEN = "refreshToken";
     public static final String TAG_INSTANCE_URL = "instanceUrl";
 
+    public static final String SALESFORCE_INSTANCE_URL = "https://na10.salesforce.com";
+
     public class InspectionTypes {
         public static final String TYPE_AFFIRMATIVE_NEGATIVE = "Affirmative/Negative";
         public static final String TYPE_SUCCESS_FAILURE = "Success/Failure";

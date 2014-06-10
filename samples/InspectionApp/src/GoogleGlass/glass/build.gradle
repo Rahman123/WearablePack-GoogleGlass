@@ -17,9 +17,9 @@ android {
 
         release {
             storeFile file("keys/keystore.jks")
-            storePassword "aefah2uuj3fio2RaeLo5aiduuCeiloch"
-            keyAlias "salesforce.glassdemo"
-            keyPassword "ohv5ieXool5oa5kie6Quein3joaP6Dae"
+            storePassword <insert store password here>
+            keyAlias <insert key here>
+            keyPassword <insert key password here>
         }
     }
 

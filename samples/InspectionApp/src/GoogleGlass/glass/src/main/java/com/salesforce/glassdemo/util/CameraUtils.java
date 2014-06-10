@@ -42,7 +42,6 @@ public class CameraUtils {
         return (result);
     }
 
-
     public static Camera.Size getBestPreviewSize(int width, int height, Camera.Parameters parameters) {
         Camera.Size result = null;
 

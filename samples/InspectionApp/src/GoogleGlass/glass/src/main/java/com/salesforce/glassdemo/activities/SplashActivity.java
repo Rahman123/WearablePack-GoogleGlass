@@ -9,9 +9,11 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
+import com.android.volley.Response;
 import com.google.android.glass.media.Sounds;
 import com.google.android.glass.touchpad.Gesture;
 import com.google.android.glass.touchpad.GestureDetector;
+import com.salesforce.glassdemo.Constants;
 import com.salesforce.glassdemo.Data;
 import com.salesforce.glassdemo.R;
 import com.salesforce.glassdemo.api.SalesforceAPIManager;
@@ -56,7 +58,14 @@ public class SplashActivity extends Activity {
         mGestureDetector = new GestureDetector(this);
         mGestureDetector.setBaseListener(mBaseListener);
 
-        SalesforceAPIManager.getGPSCoordinates(getApplicationContext());
+        Log.i(Constants.TAG, "Requesting new refresh token");
+        SalesforceAPIManager.getNewAccessToken(SplashActivity.this, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String s) {
+                Log.i(Constants.TAG, "Requesting GPS coords");
+                SalesforceAPIManager.getGPSCoordinates(SplashActivity.this);
+            }
+        });
     }
 
     @Override

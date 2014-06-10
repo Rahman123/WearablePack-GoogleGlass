@@ -5,7 +5,6 @@ import android.util.Log;
 import com.salesforce.glassdemo.Constants;
 
 public class InspectionStepResponse {
-
     /**
      * The Salesforce Id of this object (returned by POST call to add this object to Salesforce)
      */

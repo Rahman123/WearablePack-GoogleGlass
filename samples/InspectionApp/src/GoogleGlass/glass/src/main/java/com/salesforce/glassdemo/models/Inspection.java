@@ -3,7 +3,6 @@ package com.salesforce.glassdemo.models;
 import java.util.ArrayList;
 
 public class Inspection {
-    // TODO need to keep track of Salesforce-provided ID. Assuming string
     public String id;
 
     /** Name of the inspection */

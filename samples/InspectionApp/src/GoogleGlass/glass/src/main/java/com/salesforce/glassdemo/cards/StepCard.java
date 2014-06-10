@@ -17,15 +17,12 @@ public class StepCard extends Card {
 
         if (step.type.equals(Constants.InspectionTypes.TYPE_NUMBER) || step.type.equals(Constants.InspectionTypes.TYPE_TEXT)) {
             setFootnote(step.type + " - Say dictate to input data");
-        } else if (step.type.equals(Constants.InspectionTypes.TYPE_AFFIRMATIVE_NEGATIVE)) {
-            setFootnote("Affirmative/Negative");
-        } else if (step.type.equals(Constants.InspectionTypes.TYPE_SUCCESS_FAILURE)) {
-            setFootnote("Success/Failure");
         } else {
             setFootnote(step.type);
         }
 
         if (step.imageUrl != null && !step.imageUrl.isEmpty()) {
+            // If there is an image, set the card image whenever the image is finish downloading
             new SetCardImageTask(this).execute(step.imageUrl);
         }
     }

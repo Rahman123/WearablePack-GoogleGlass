@@ -14,6 +14,8 @@ import android.speech.RecognizerIntent;
 import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,7 +57,7 @@ public class InspectionActivity extends Activity {
     private static final int REQUESTCODE_PICTURE = 1001;
     private static final int REQUESTCODE_DICTATE = 1002;
     /**
-     * Listener that displays the options menu when the touchpad is tapped.
+     * Gesture listener that handles actions on the touchpad
      */
     private final GestureDetector.BaseListener mBaseListener = new GestureDetector.BaseListener() {
         @Override
@@ -63,40 +65,33 @@ public class InspectionActivity extends Activity {
             Log.i(Constants.TAG, "Gesture detected: " + gesture.toString());
 
             if (gesture == Gesture.TAP) {
-                mAudioManager.playSoundEffect(Sounds.TAP);
-                if (mCardScrollView.getSelectedItemPosition() == mCards.size() - 1) {
+                if (mCardScrollView.getSelectedItemPosition() == mCards.size() - 1 && mCardScrollView.getChildCount() > 1) {
+                    // On the last card "Inspection Complete", so restart application
+                    mAudioManager.playSoundEffect(Sounds.TAP);
                     goRelaunchApplication();
+                } else {
+                    // open the menu
+                    mAudioManager.playSoundEffect(Sounds.TAP);
+                    openOptionsMenu();
                 }
-                //openOptionsMenu();
-                return true;
-            } else if (gesture == Gesture.TWO_SWIPE_RIGHT) {
-                goNextStep();
-                return true;
-            } else if (gesture == Gesture.SWIPE_DOWN) {
-                // this is the back gesture, which we probably don't want to swallow yet // TODO
-                return false;
-            } else if (gesture == Gesture.LONG_PRESS) {
-                goFinishCard();
-                return true;
-            } else if (gesture == Gesture.TWO_TAP) {
-                voiceDetectionListener.onPhraseDetected(0, "affirmative");
-                return true;
-            } else if (gesture == Gesture.TWO_LONG_PRESS) {
-                voiceDetectionListener.onPhraseDetected(0, "negative");
-                return true;
-            } else if (gesture == Gesture.THREE_TAP) {
-                voiceDetectionListener.onPhraseDetected(0, "success");
-                return true;
-            } else if (gesture == Gesture.THREE_LONG_PRESS) {
-                voiceDetectionListener.onPhraseDetected(0, "failure");
-                return true;
-            } else if (gesture == Gesture.TWO_SWIPE_UP) {
-                voiceDetectionListener.onPhraseDetected(0, "picture");
                 return true;
             } else {
                 return false;
             }
         }
+    };
+
+    /**
+     * Valid phrases for voice detection
+     */
+    private final String[] phrases = {
+            "affirmative", "negative", // yes/no question
+            "success", "failure", // pass/fail question
+            "dictate", // text and number entry
+            "documentation", // documentation, for any question
+            "picture", // for taking a picture in the field
+            "skip", // to skip a question
+            "next", // to begin
     };
 
     private VoiceDetection.VoiceDetectionListener voiceDetectionListener = new VoiceDetection.VoiceDetectionListener() {
@@ -135,14 +130,14 @@ public class InspectionActivity extends Activity {
 
             // These commands affect every step type
             if (phrase.equals("picture")) {
-                isr.hasPhoto = true;
+                inspectionStepResponse.hasPhoto = true;
                 startPictureActivity();
                 return;
             }
 
             if (phrase.equals("documentation")) {
                 Log.i(Constants.TAG, "Documentation");
-                showDocumentation(step.id);
+                startDocumentationActivity(step.id);
                 return;
             }
 
@@ -154,15 +149,15 @@ public class InspectionActivity extends Activity {
             // Yes/No question
             if (step.type.equals(Constants.InspectionTypes.TYPE_AFFIRMATIVE_NEGATIVE)) {
                 if (phrase.equals("affirmative")) {
-                    isr.answer = phrase;
-                    isr.inspectionResponseId = inspectionResponse.id;
-                    postStepResponse(isr);
-                    startNewCaseDictation();
+                    inspectionStepResponse.answer = phrase;
+                    inspectionStepResponse.inspectionResponseId = inspectionResponse.id;
+                    postStepResponse(inspectionStepResponse);
+                    startNewCaseDictationActivity();
                     return;
                 } else if (phrase.equals("negative")) {
-                    isr.answer = phrase;
-                    isr.inspectionResponseId = inspectionResponse.id;
-                    postStepResponse(isr);
+                    inspectionStepResponse.answer = phrase;
+                    inspectionStepResponse.inspectionResponseId = inspectionResponse.id;
+                    postStepResponse(inspectionStepResponse);
                     goNextStep();
                     return;
                 }
@@ -170,16 +165,16 @@ public class InspectionActivity extends Activity {
 
             if (step.type.equals(Constants.InspectionTypes.TYPE_SUCCESS_FAILURE)) {
                 if (phrase.equals("success")) {
-                    isr.answer = phrase;
-                    isr.inspectionResponseId = inspectionResponse.id;
-                    postStepResponse(isr);
+                    inspectionStepResponse.answer = phrase;
+                    inspectionStepResponse.inspectionResponseId = inspectionResponse.id;
+                    postStepResponse(inspectionStepResponse);
                     goNextStep();
                     return;
                 } else if (phrase.equals("failure")) {
-                    isr.answer = phrase;
-                    isr.inspectionResponseId = inspectionResponse.id;
-                    postStepResponse(isr);
-                    startNewCaseDictation();
+                    inspectionStepResponse.answer = phrase;
+                    inspectionStepResponse.inspectionResponseId = inspectionResponse.id;
+                    postStepResponse(inspectionStepResponse);
+                    startNewCaseDictationActivity();
                     return;
                 }
             }
@@ -193,6 +188,67 @@ public class InspectionActivity extends Activity {
         }
     };
 
+    private AdapterView.OnItemSelectedListener cardScrollViewItemSelectedListener = new AdapterView.OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            final InspectionStep inspectionStep = getInspectionStep();
+            if (inspectionStep != null) {
+                inspectionStepResponse = new InspectionStepResponse(inspectionStep, inspectionResponse, "");
+            } else {
+            }
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+
+        }
+    };
+
+    final View.OnFocusChangeListener cardScrollViewFocusChangeListener = new View.OnFocusChangeListener() {
+        @Override
+        public void onFocusChange(View v, boolean hasFocus) {
+            unfocusCardScrollView();
+        }
+    };
+
+    private class InspectionStepCardScrollAdapter extends CardScrollAdapter {
+        @Override
+        public int getCount() {
+            return mCards.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return mCards.get(position);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            return mCards.get(position).getView(convertView, parent);
+        }
+
+        /**
+         * Returns the view type of this card so the system can figure out
+         * if it can be recycled.
+         */
+        @Override
+        public int getItemViewType(int position) {
+            return mCards.get(position).getItemViewType();
+        }
+
+        /**
+         * Returns the amount of view types.
+         */
+        @Override
+        public int getViewTypeCount() {
+            return Card.getViewTypeCount();
+        }
+
+        @Override
+        public int getPosition(Object item) {
+            return mCards.indexOf(item);
+        }
+    }
 
     /**
      * Audio manager used to play system sound effects.
@@ -210,15 +266,49 @@ public class InspectionActivity extends Activity {
      */
     private GestureDetector mGestureDetector;
 
-    private List<Card> mCards;
+    /**
+     * The voice detection module
+     */
+    private VoiceDetection mVoiceDetection;
+
+    /**
+     * The generated Inspection Step cards, one per InspectionStep.
+     * A title card and "inspection complete" card are added to this list
+     */
+    private List<Card> mCards = new ArrayList<Card>();
+
+    /**
+     * The CardScrollView that holds the cards
+     */
     private CardScrollView mCardScrollView;
+
+    /**
+     * The adapter holding the cards.  The adapter directly uses the mCards field.
+     * We hold this as a field of the activity so that we can notify the adapter when all the cards
+     * are loaded.
+     */
+    private InspectionStepCardScrollAdapter adapter = new InspectionStepCardScrollAdapter();
+
+    /**
+     * The cache that InspectionStep photos are downloaded into before the cards get generated.
+     */
     private PhotoCache photoCache = new PhotoCache();
 
+    /**
+     * The current inspection
+     */
     Inspection inspection;
-    private VoiceDetection mVoiceDetection;
+
+    /**
+     * The current InspectionResponse, which we update with a Salesforce-generated ID upon starting
+     */
     private InspectionResponse inspectionResponse;
-    private InspectionStepResponse isr;
-    private InspectionStepCardScrollAdapter adapter;
+
+    /**
+     * The response for the current step.
+     * We hold this as a field of the activity so that we can update it with a picture when necessary
+     */
+    private InspectionStepResponse inspectionStepResponse;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -226,80 +316,107 @@ public class InspectionActivity extends Activity {
         setContentView(R.layout.activity_inspection);
         mCardScrollView = (CardScrollView) findViewById(R.id.card_scroll_view);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        mGestureDetector = new GestureDetector(this);
+        mGestureDetector.setBaseListener(mBaseListener);
 
         Bundle b = getIntent().getExtras();
         final String siteId = b.getString("siteId");
         final String inspectionId = b.getString("inspectionId");
         inspection = Data.getInstance().getInspectionFromSite(siteId, inspectionId);
 
-        Log.i(Constants.TAG, "Started InspectionActivity " + siteId + " " + inspectionId);
-
-        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        mGestureDetector = new GestureDetector(this);
-        mGestureDetector.setBaseListener(mBaseListener);
-
-        mCards = new ArrayList<Card>();
         mCards.add(getTitleCard());
-        adapter = new InspectionStepCardScrollAdapter();
         mCardScrollView.setAdapter(adapter);
+        mCardScrollView.setOnItemSelectedListener(cardScrollViewItemSelectedListener);
+        mCardScrollView.setOnFocusChangeListener(cardScrollViewFocusChangeListener);
         mCardScrollView.activate();
-        mCardScrollView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                final InspectionStep inspectionStep = getInspectionStep();
-                if (inspectionStep != null) {
-                    Log.i(Constants.TAG, "got step " + inspectionStep.text);
-                    isr = new InspectionStepResponse(inspectionStep, inspectionResponse, "");
-                } else {
-                    Log.i(Constants.TAG, "got null");
-                }
-            }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
+        // Now that we have added the title card, we can request the inspection data
         fetchData();
 
-        /**
-         * The CardScrollView regains focus when the cards are loaded.
-         * As we can't easily see when that happens, we unfocus after 100ms,
-         * under the assumption that the cards are done loading in that time.
-         */
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                unfocusCardScrollView();
-            }
-        }, 100);
-
-        final String[] phrases = {
-                "affirmative", "negative", // yes/no question
-                "success", "failure", // pass/fail question
-                "dictate", // text and number entry
-                "documentation", // documentation, for any question
-                "picture", // for taking a picture in the field
-                "skip", // to skip a question
-                "next", // to begin
-        };
+        // Set up voice detection
         mVoiceDetection = new VoiceDetection(this, "ok glass", voiceDetectionListener, phrases);
 
+        // Create a new Inspection Response
         inspectionResponse = new InspectionResponse(inspection);
+
+        // Get an InspectionResponse ID
         SalesforceAPIManager.postInspectionResponse(this, inspectionResponse,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject jsonObject) {
                         try {
                             inspectionResponse.id = jsonObject.getString("id");
-                            Log.i(Constants.TAG, "Received InspectionResponse ID " + inspectionResponse.id);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
                 }
         );
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.clear();
+        getMenuInflater().inflate(R.menu.menu_inspection, menu);
+
+        InspectionStep step = getInspectionStep();
+        if (step == null || !step.type.equals(Constants.InspectionTypes.TYPE_AFFIRMATIVE_NEGATIVE)) {
+            menu.removeItem(R.id.affirmative);
+            menu.removeItem(R.id.negative);
+        }
+
+        if (step == null || !step.type.equals(Constants.InspectionTypes.TYPE_SUCCESS_FAILURE)) {
+            menu.removeItem(R.id.success);
+            menu.removeItem(R.id.failure);
+        }
+
+        if (step == null || !(step.type.equals(Constants.InspectionTypes.TYPE_NUMBER) || step.type.equals(Constants.InspectionTypes.TYPE_TEXT))) {
+            menu.removeItem(R.id.dictate);
+        }
+
+        if (step == null) {
+            menu.removeItem(R.id.skip);
+            menu.removeItem(R.id.picture);
+            menu.removeItem(R.id.dictate);
+            menu.removeItem(R.id.documentation);
+        }
+
+        return menu.hasVisibleItems();
+    }
+
+    /**
+     * For the options menu, we simply have it emulate a detected hotword
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.success:
+                voiceDetectionListener.onPhraseDetected(0, "success");
+                break;
+            case R.id.failure:
+                voiceDetectionListener.onPhraseDetected(0, "failure");
+                break;
+            case R.id.affirmative:
+                voiceDetectionListener.onPhraseDetected(0, "affirmative");
+                break;
+            case R.id.negative:
+                voiceDetectionListener.onPhraseDetected(0, "negative");
+                break;
+            case R.id.dictate:
+                voiceDetectionListener.onPhraseDetected(0, "dictate");
+                break;
+            case R.id.skip:
+                voiceDetectionListener.onPhraseDetected(0, "skip");
+                break;
+            case R.id.picture:
+                voiceDetectionListener.onPhraseDetected(0, "picture");
+                break;
+            case R.id.documentation:
+                voiceDetectionListener.onPhraseDetected(0, "documentation");
+                break;
+        }
+        return true;
     }
 
     @Override
@@ -322,37 +439,26 @@ public class InspectionActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUESTCODE_NEW_CASE_TRANSCRIPTION && resultCode == RESULT_OK) {
+            // Post a new case based on the speech transcription results
             List<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             String spokenText = results.get(0);
 
-            SalesforceAPIManager.postNewCase(
-                    this,
-                    inspectionResponse,
-                    getInspectionStep().text,
-                    spokenText,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject jsonObject) {
-                            Log.i(Constants.TAG, "Posted new case successfully. " + jsonObject.toString());
-                        }
-                    }
-            );
-
+            postNewCase(spokenText);
             goNextStep();
         } else if (requestCode == REQUESTCODE_NEW_CASE_TRANSCRIPTION && resultCode == RESULT_CANCELED) {
             Log.w(Constants.TAG, "User canceled voice transcription for new case. Returning to previous location");
         } else if (requestCode == REQUESTCODE_PICTURE && resultCode == RESULT_OK) {
-            //base64Image = data.getExtras().getString(CameraActivity.EXTRA_BASE64_IMAGE);
-            Log.i(Constants.TAG, "Received picture successfully.");
+            // Post a new picture (when ready) for the current step.
             String picturePath = data.getStringExtra(CameraManager.EXTRA_PICTURE_FILE_PATH);
-            processPictureWhenReady(picturePath, isr);
+            processPictureWhenReady(picturePath, inspectionStepResponse);
         } else if (requestCode == REQUESTCODE_PICTURE && resultCode == RESULT_CANCELED) {
             Log.i(Constants.TAG, "Picture taking cancelled.");
         } else if (requestCode == REQUESTCODE_DICTATE && resultCode == RESULT_OK) {
+            // Post an InspectionStepResponse based on the speech transcription results
             List<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             String spokenText = results.get(0);
-            isr.answer = spokenText;
-            postStepResponse(isr);
+            inspectionStepResponse.answer = spokenText;
+            postStepResponse(inspectionStepResponse);
             goNextStep();
         } else if (requestCode == REQUESTCODE_DICTATE && resultCode == RESULT_CANCELED) {
             Log.w(Constants.TAG, "User canceled voice transcription for step. Returning to previous location");
@@ -383,16 +489,12 @@ public class InspectionActivity extends Activity {
         mCardScrollView.onKeyDown(KeyEvent.KEYCODE_DPAD_RIGHT, null);
     }
 
-    private void goFinishCard() {
-        final int count = mCards.size();
-        mCardScrollView.setSelection(count - 1);
-    }
-
     private void goRelaunchApplication() {
         Log.i(Constants.TAG, "Restarting application...");
         startActivity(new Intent(InspectionActivity.this, SplashActivity.class));
         finish();
     }
+
 
     private void fetchData() {
         if (inspection.steps == null || inspection.steps.isEmpty()) {
@@ -426,7 +528,7 @@ public class InspectionActivity extends Activity {
                 Response.ErrorListener errorListener = new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError volleyError) {
-                        Log.e(Constants.TAG, volleyError.toString());
+                        Log.w(Constants.TAG, volleyError.toString());
                         Log.i(Constants.TAG, "Removing photo from cache: " + step.photoId);
                         photoCache.remove(step.photoId);
                     }
@@ -536,6 +638,24 @@ public class InspectionActivity extends Activity {
         }
     }
 
+    private void postNewCase(String description) {
+        SalesforceAPIManager.postNewCase(
+                this,
+                inspectionResponse,
+                getInspectionStep().text,
+                description,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject jsonObject) {
+                        Log.i(Constants.TAG, "Posted new case successfully. " + jsonObject.toString());
+                    }
+                }
+        );
+    }
+
+    /**
+     * Check if the picture returned from the photo capture activity is ready, and post it when it is
+     */
     private void processPictureWhenReady(final String picturePath, final InspectionStepResponse inspectionStepResponse) {
         final File pictureFile = new File(picturePath);
 
@@ -549,16 +669,8 @@ public class InspectionActivity extends Activity {
             inspectionStepResponse.hasPhoto = true;
             inspectionStepResponse.photo = base64Image;
         } else {
-// The file does not exist yet. Before starting the file observer, you
-// can update your UI to let the user know that the application is
-// waiting for the picture (for example, by displaying the thumbnail
-// image and a progress indicator).
-
             final File parentDirectory = pictureFile.getParentFile();
             FileObserver observer = new FileObserver(parentDirectory.getPath(), FileObserver.CLOSE_WRITE | FileObserver.MOVED_TO) {
-// Protect against additional pending events after CLOSE_WRITE
-// or MOVED_TO is handled.
-
                 private boolean isFileWritten;
 
                 @Override
@@ -584,6 +696,7 @@ public class InspectionActivity extends Activity {
                     }
                 }
             };
+
             observer.startWatching();
         }
     }
@@ -593,79 +706,56 @@ public class InspectionActivity extends Activity {
         startActivityForResult(intent, REQUESTCODE_PICTURE);
     }
 
-    private void showDocumentation(final String inspectionStepId) {
-        Response.Listener<JSONObject> listener = new Response.Listener<JSONObject>() {
+    private void startDocumentationActivity(final String inspectionStepId) {
+        mHandler.post(new Runnable() {
             @Override
-            public void onResponse(JSONObject jsonObject) {
-                try {
-                    JSONObject record = jsonObject.getJSONArray("records").getJSONObject(0);
-                    Boolean hasDocumentation = !record.isNull("Inspections_Docs__r");
-                    if (hasDocumentation) {
-                        String link = record.getJSONObject("Inspections_Docs__r").getJSONArray("records").getJSONObject(0).getString("Video_Link__c");
-                        Log.i(Constants.TAG, "Obtained documentation link: " + link);
-                        Intent i = new Intent();
-                        i.setAction("com.google.glass.action.VIDEOPLAYER");
-                        i.putExtra("video_url", link);
-                        startActivity(i);
-                    } else {
-                        startActivity(new Intent(InspectionActivity.this, NoDocumentationActivity.class));
+            public void run() {
+                Response.Listener<JSONObject> listener = new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject jsonObject) {
+                        try {
+                            JSONObject record = jsonObject.getJSONArray("records").getJSONObject(0);
+                            Boolean hasDocumentation = !record.isNull("Inspections_Docs__r");
+                            if (hasDocumentation) {
+                                String link = record.getJSONObject("Inspections_Docs__r").getJSONArray("records").getJSONObject(0).getString("Video_Link__c");
+                                Log.i(Constants.TAG, "Obtained documentation link: " + link);
+                                Intent i = new Intent();
+                                i.setAction("com.google.glass.action.VIDEOPLAYER");
+                                i.putExtra("video_url", link);
+                                startActivity(i);
+                            } else {
+                                startActivity(new Intent(InspectionActivity.this, NoDocumentationActivity.class));
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                };
+                SalesforceAPIManager.getDocumentation(InspectionActivity.this, inspectionStepId, listener);
             }
-        };
-        SalesforceAPIManager.getDocumentation(this, inspectionStepId, listener);
+        });
+
     }
 
     private void startDictateActivity() {
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Dictate the data");
-        startActivityForResult(intent, REQUESTCODE_DICTATE);
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Dictate the data");
+                startActivityForResult(intent, REQUESTCODE_DICTATE);
+            }
+        });
     }
 
-    private void startNewCaseDictation() {
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Explain the details of the problem");
-        startActivityForResult(intent, REQUESTCODE_NEW_CASE_TRANSCRIPTION);
-    }
-
-    private class InspectionStepCardScrollAdapter extends CardScrollAdapter {
-        @Override
-        public int getCount() {
-            return mCards.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return mCards.get(position);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            return mCards.get(position).getView(convertView, parent);
-        }
-
-        /**
-         * Returns the view type of this card so the system can figure out
-         * if it can be recycled.
-         */
-        @Override
-        public int getItemViewType(int position) {
-            return mCards.get(position).getItemViewType();
-        }
-
-        /**
-         * Returns the amount of view types.
-         */
-        @Override
-        public int getViewTypeCount() {
-            return Card.getViewTypeCount();
-        }
-
-        @Override
-        public int getPosition(Object item) {
-            return mCards.indexOf(item);
-        }
+    private void startNewCaseDictationActivity() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Explain the details of the problem");
+                startActivityForResult(intent, REQUESTCODE_NEW_CASE_TRANSCRIPTION);
+            }
+        });
     }
 }

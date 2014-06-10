@@ -1,6 +1,6 @@
 package com.salesforce.glassdemo.api;
 
-import android.content.Context;
+import android.app.Activity;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Response;
@@ -13,9 +13,9 @@ import java.util.Map;
 
 public class SalesforceJSONObjectRequest extends JsonObjectRequest {
 
-    private Context mContext;
+    private Activity mContext;
 
-    public SalesforceJSONObjectRequest(Context context, int method, String url, JSONObject jsonObject, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener) {
+    public SalesforceJSONObjectRequest(Activity context, int method, String url, JSONObject jsonObject, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener) {
         super(method, url, jsonObject, listener, errorListener);
         mContext = context;
     }

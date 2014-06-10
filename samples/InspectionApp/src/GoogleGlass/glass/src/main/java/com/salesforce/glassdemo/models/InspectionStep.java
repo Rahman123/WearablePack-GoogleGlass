@@ -1,18 +1,10 @@
 package com.salesforce.glassdemo.models;
 
 public class InspectionStep {
-    // TODO need to keep track of Salesforce-provided ID. Assuming string
     public String id;
 
     /** Main text of the instruction, will be the primary card text. */
     public String text;
-
-    /**
-     * Subtitle representing the options that can be spoken or selected.
-     * TODO: Open to changing the format of this.  We might programatically
-     * set this depending on what kind of step type it is.
-     */
-    public String subtitle;
 
     /**
      * Type of the step.
@@ -29,7 +21,6 @@ public class InspectionStep {
 
     public String photoId;
 
-
     public String documentationUrl;
 
     /**
@@ -42,7 +33,6 @@ public class InspectionStep {
         return "InspectionStep{" +
                 "id='" + id + '\'' +
                 ", text='" + text + '\'' +
-                ", subtitle='" + subtitle + '\'' +
                 ", type='" + type + '\'' +
                 ", imageUrl='" + imageUrl + '\'' +
                 ", photoId='" + photoId + '\'' +

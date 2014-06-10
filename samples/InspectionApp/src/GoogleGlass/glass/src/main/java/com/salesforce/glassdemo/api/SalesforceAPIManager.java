@@ -1,5 +1,8 @@
 package com.salesforce.glassdemo.api;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -34,17 +37,28 @@ import java.util.List;
 import java.util.Map;
 
 public class SalesforceAPIManager {
-
     public static String SOQL_QUERY_PATH = "/services/data/v30.0/query/?q=";
 
     public static String getInstanceUrl(Context context) {
         SharedPreferences preferences = context.getSharedPreferences(Constants.TAG_PREFERENCES, Context.MODE_PRIVATE);
-        return preferences.getString(Constants.TAG_INSTANCE_URL, "https://na10.salesforce.com");
+        return preferences.getString(Constants.TAG_INSTANCE_URL, Constants.SALESFORCE_INSTANCE_URL);
     }
 
     public static String getRefreshToken(Context context) {
-        SharedPreferences preferences = context.getSharedPreferences(Constants.TAG_PREFERENCES, Context.MODE_PRIVATE);
-        return preferences.getString(Constants.TAG_REFRESH_TOKEN, "5Aep861LfLgfK7IRSzIzi0RMSyDE.eo1SmSsd35DOxD1klCT9PK0K4RvMc87WhXBBIKQZZZgCxPyFEv.mvjq9gr");
+        AccountManager accountManager = AccountManager.get(context);
+        Account[] accounts = accountManager.getAccountsByType("com.salesforce.glassdemo");
+        if (accounts.length == 0) {
+            Log.e(Constants.TAG, "Got no accounts!");
+            return "";
+        }
+
+        Log.i(Constants.TAG, "Accounts: ");
+        for (Account a: accounts) {
+            Log.i(Constants.TAG, "Got account: " + a.name + " " + a.type);
+        }
+
+        Account account = accounts[0];
+        return accountManager.getPassword(account);
     }
 
     public static String getAccessToken(Context context) {
@@ -52,7 +66,7 @@ public class SalesforceAPIManager {
         return preferences.getString(Constants.TAG_ACCESS_TOKEN, null);
     }
 
-    public static void getNewAccessToken(final Context context, final Response.Listener<String> listener) {
+    public static void getNewAccessToken(final Activity context, final Response.Listener<String> listener) {
         String url = "https://login.salesforce.com/services/oauth2/token";
         Response.Listener<String> stringListener = new Response.Listener<String>() {
             @Override
@@ -74,12 +88,15 @@ public class SalesforceAPIManager {
                 }
             }
         };
+
         Response.ErrorListener errorListener = new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-                // TODO: Show some sort of error/alert
+                Log.e(Constants.TAG, "Unable to obtain a new Access Token.  Quitting.");
+                context.finish();
             }
         };
+
         StringRequest myReq = new StringRequest(Request.Method.POST,
                 url,
                 stringListener,
@@ -94,16 +111,53 @@ public class SalesforceAPIManager {
                 return params;
             }
         };
+
         VolleySingleton.getInstance(context).getRequestQueue().add(myReq);
     }
 
-    public static void getGPSCoordinates(final Context context) {
-        Log.i(Constants.TAG, "Requesting location...");
+    public static void getNewRefreshToken(final Activity context, final Response.Listener<String> listener) {
+        /*
+        AccountManager accountManager = AccountManager.get(context);
+        Account[] accounts = accountManager.getAccountsByType("com.salesforce.glassdemo");
+        if (accounts.length == 0) {
+            Log.e(Constants.TAG, "Got no accounts!");
+            return;
+        }
 
+        Log.i(Constants.TAG, "Accounts: ");
+        for (Account a: accounts) {
+            Log.i(Constants.TAG, "Got account: " + a.name + " " + a.type);
+        }
+
+        Account account = accounts[0];
+        final String AUTH_TOKEN_TYPE = "refresh_token";
+
+        accountManager.getAuthToken(account, AUTH_TOKEN_TYPE, new Bundle(), context, new AccountManagerCallback<Bundle>() {
+            public void run(AccountManagerFuture<Bundle> future) {
+                try {
+                    String refreshToken = future.getResult().getString("refreshtoken");
+                    Log.i(Constants.TAG, "Got refreshToken " + (refreshToken != null ? refreshToken : "(null)"));
+
+                    SharedPreferences prefs = context.getSharedPreferences(Constants.TAG_PREFERENCES, Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString(Constants.TAG_REFRESH_TOKEN, refreshToken);
+                    editor.commit();
+
+                    listener.onResponse(refreshToken);
+                } catch (Exception e) {
+                    Log.i(Constants.TAG, "Exception: unable to get Refresh Token", e);
+                    // Handle exception.
+                }
+            }
+        }, null);
+
+        Log.i(Constants.TAG, "Password: " + accountManager.getPassword(account));
+        */
+    }
+
+    public static void getGPSCoordinates(final Activity context) {
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-        // This example requests fine accuracy and requires altitude, but
-        // these criteria could be whatever you want.
         Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_COARSE);
         criteria.setAltitudeRequired(false);
@@ -119,9 +173,8 @@ public class SalesforceAPIManager {
         h.postDelayed(fakeGpsLocationRunnable, 5 * 1000);
 
 
-        List<String> providers = locationManager.getProviders(criteria, true /* enabledOnly */);
+        List<String> providers = locationManager.getProviders(criteria, true);
         for (String provider : providers) {
-            Log.i(Constants.TAG, "Requesting from prov: " + provider.toString());
             locationManager.requestLocationUpdates(provider, 0, 0, new LocationListener() {
                 @Override
                 public void onLocationChanged(Location location) {
@@ -154,7 +207,7 @@ public class SalesforceAPIManager {
         }
     }
 
-    private static void getSitesForCoordinates(final Context context, final double latitude, final double longitude) {
+    private static void getSitesForCoordinates(final Activity context, final double latitude, final double longitude) {
         final ArrayList<InspectionSite> allSites = Data.getInstance().allSites;
 
         if (!allSites.isEmpty()) {
@@ -182,9 +235,7 @@ public class SalesforceAPIManager {
 
             @Override
             public void onErrorResponse(final VolleyError error) {
-                // TODO: This could happen for any API call, so it should be generalized somehow
-                // One way in which OAuth can fail. Checking the error object's responseCode would probably
-                // be cleaner, but it's coming back as null, so that won't work.
+                // Detect if this failure is an OAuth failure
                 Boolean needsNewToken = false;
                 int statusCode = -1;
                 if (error.networkResponse != null) {
@@ -202,6 +253,7 @@ public class SalesforceAPIManager {
                 }
             }
         };
+
         String url = null;
         try {
             String query = String.format("Select Name, Location__c, Id, Address__c, (Select Name, Id, isActive__c, Description__c From Inspections__r) From Inspection_Site__c WHERE DISTANCE(Location__c, GEOLOCATION(%f, %f), 'mi') < %f", latitude, longitude, Constants.DISTANCE_MILES);
@@ -215,19 +267,21 @@ public class SalesforceAPIManager {
         VolleySingleton.getInstance(context).getRequestQueue().add(request);
     }
 
-    public static void getInspectionSteps(final Context context, final Inspection inspection) {
+    public static void getInspectionSteps(final Activity context, final Inspection inspection) {
         final Response.Listener<JSONObject> listener = new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject jsonObject) {
                 SalesforceJSONHelper.getInspectionStepsForInspection(inspection, jsonObject);
             }
         };
+
         final Response.ErrorListener errorListener = new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
                 Log.v(Constants.TAG, volleyError.toString());
             }
         };
+
         String url = null;
         try {
             String query = String.format("Select isActive__c, Site__c, Name, Id, Description__c, "
@@ -244,7 +298,7 @@ public class SalesforceAPIManager {
         VolleySingleton.getInstance(context).getRequestQueue().add(request);
     }
 
-    public static void getAttachment(final Context context,
+    public static void getAttachment(final Activity context,
                                      InspectionStep inspectionStep,
                                      Response.Listener<Bitmap> listener,
                                      Response.ErrorListener errorListener) {
@@ -257,7 +311,7 @@ public class SalesforceAPIManager {
     }
 
 
-    public static void getDocumentation(final Context context, final String inspectionStepId, final Response.Listener<JSONObject> listener) {
+    public static void getDocumentation(final Activity context, final String inspectionStepId, final Response.Listener<JSONObject> listener) {
         String url = null;
         try {
             String query = String.format("Select (Select Video_Link__c From Inspections_Docs__r) From Inspection_Step__c WHERE Id = '%s'", inspectionStepId);
@@ -265,15 +319,14 @@ public class SalesforceAPIManager {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+
         Response.ErrorListener errorListener = new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-                // TODO: Make sure this error is actually due to oauth token expiry
-                // TODO: Show some sort of error/alert
                 Response.Listener<String> stringListener = new Response.Listener<String>() {
                     @Override
                     public void onResponse(String s) {
-                        getDocumentation(context, inspectionStepId, listener);
+                        Log.w(Constants.TAG, "Unable to get documentation");
                     }
                 };
                 getNewAccessToken(context, stringListener);
@@ -286,7 +339,7 @@ public class SalesforceAPIManager {
     }
 
 
-    public static void postNewCase(final Context context,
+    public static void postNewCase(final Activity context,
                                    final InspectionResponse inspectionResponse,
                                    final String subject,
                                    final String description,
@@ -316,12 +369,10 @@ public class SalesforceAPIManager {
         Response.ErrorListener errorListener = new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-                // TODO: Make sure this error is actually due to oauth token expiry
-                // TODO: Show some sort of error/alert
                 Response.Listener<String> stringListener = new Response.Listener<String>() {
                     @Override
                     public void onResponse(String s) {
-                        postNewCase(context, inspectionResponse, subject, description, listener);
+                        Log.w(Constants.TAG, "Unable to post new case");
                     }
                 };
                 SalesforceAPIManager.getNewAccessToken(context, stringListener);
@@ -333,7 +384,7 @@ public class SalesforceAPIManager {
         VolleySingleton.getInstance(context).getRequestQueue().add(request);
     }
 
-    public static void postInspectionResponse(final Context context, final InspectionResponse inspectionResponse, final Response.Listener<JSONObject> listener) {
+    public static void postInspectionResponse(final Activity context, final InspectionResponse inspectionResponse, final Response.Listener<JSONObject> listener) {
         String url = getInstanceUrl(context) + "/services/data/v30.0/sobjects/Inspection_Response__c";
         JSONObject jsonObject = SalesforceObjectSerializer.serialize(inspectionResponse);
         Response.Listener<JSONObject> jsonObjectListener = new Response.Listener<JSONObject>() {
@@ -345,7 +396,7 @@ public class SalesforceAPIManager {
         Response.ErrorListener errorListener = new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-                // TODO: Show some sort of error/alert
+                Log.w(Constants.TAG, "Unable to post Inspection Response");
             }
         };
 
@@ -354,7 +405,7 @@ public class SalesforceAPIManager {
         VolleySingleton.getInstance(context).getRequestQueue().add(request);
     }
 
-    public static void postInspectionStepResponse(final Context context, final InspectionStepResponse inspectionStepResponse, final Response.Listener<JSONObject> listener) {
+    public static void postInspectionStepResponse(final Activity context, final InspectionStepResponse inspectionStepResponse, final Response.Listener<JSONObject> listener) {
         String url = getInstanceUrl(context) + "/services/data/v30.0/sobjects/Inspection_Step_Response__c";
         JSONObject jsonObject = SalesforceObjectSerializer.serialize(inspectionStepResponse);
         Response.Listener<JSONObject> jsonObjectListener = new Response.Listener<JSONObject>() {
@@ -366,7 +417,7 @@ public class SalesforceAPIManager {
         Response.ErrorListener errorListener = new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-                // TODO: Show some sort of error/alert
+                Log.w(Constants.TAG, "Unable to post InspectionStepResponse");
             }
         };
 
@@ -375,7 +426,7 @@ public class SalesforceAPIManager {
         VolleySingleton.getInstance(context).getRequestQueue().add(request);
     }
 
-    public static void postAttachment(final Context context, final String parentId, final String attachmentName, final String encodedImage, final Response.Listener<JSONObject> listener) {
+    public static void postAttachment(final Activity context, final String parentId, final String attachmentName, final String encodedImage, final Response.Listener<JSONObject> listener) {
         String url = getInstanceUrl(context) + "/services/data/v30.0/sobjects/Attachment";
         JSONObject jsonObject = new JSONObject();
         try {
@@ -397,25 +448,7 @@ public class SalesforceAPIManager {
         Response.ErrorListener errorListener = new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-                // TODO: Show some sort of error/alert
-                // TODO: This could happen for any API call, so it should be generalized somehow
-                // One way in which OAuth can fail. Checking the error object's responseCode would probably
-                // be cleaner, but it's coming back as null, so that won't work.
-                Boolean needsNewToken = false;
-                int statusCode = -1;
-                if (volleyError.networkResponse != null) {
-                    statusCode = volleyError.networkResponse.statusCode;
-                }
-                needsNewToken = statusCode == 401 || volleyError.getCause().toString().equals("java.io.IOException: No authentication challenges found");
-                if (needsNewToken) {
-                    Response.Listener<String> tokenResponseListener = new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            postAttachment(context, parentId, attachmentName, encodedImage, listener);
-                        }
-                    };
-                    getNewAccessToken(context, tokenResponseListener);
-                }
+                Log.w(Constants.TAG, "Unable to post attachment for parent " + parentId);
             }
         };
 
@@ -423,121 +456,4 @@ public class SalesforceAPIManager {
 
         VolleySingleton.getInstance(context).getRequestQueue().add(request);
     }
-
-
-    public static void testSerialization(final Context context) {
-        /*
-        final InspectionResponse inspectionResponse = new InspectionResponse();
-        inspectionResponse.inspectionId = "a00F000000Bbml1IAB";
-
-        final InspectionStepResponse inspectionStepResponse1 = new InspectionStepResponse();
-        inspectionStepResponse1.answer = "Yes";
-        inspectionStepResponse1.stepId = "a01F000000HOtaTIAT";
-
-        inspectionResponse.responses.add(inspectionStepResponse1);
-        final Response.Listener<JSONObject> inspectionStepResponseListener = new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject jsonObject) {
-                try {
-                    inspectionStepResponse1.id = jsonObject.getString("id");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        Response.Listener<JSONObject> inspectionResponselistener = new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject jsonObject) {
-                try {
-                    inspectionResponse.id = jsonObject.getString("id");
-                    inspectionStepResponse1.inspectionResponseId = inspectionResponse.id;
-                    SalesforceAPIManager.postInspectionStepResponse(context, inspectionStepResponse1, inspectionStepResponseListener);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        SalesforceAPIManager.postInspectionResponse(context, inspectionResponse, inspectionResponselistener);
-        */
-    }
-
-
-    public static void testPostNewCase(final Context context) {
-        /*
-        final Response.Listener<JSONObject> newCaseResponseListener = new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject jsonObject) {
-                try {
-                    Log.v(Constants.TAG, jsonObject.toString(5));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        InspectionResponse inspectionResponse = new InspectionResponse();
-        inspectionResponse.inspectionId = "a00F000000Bbml1IAB";
-        // This would normally come back from the API call to create the inspection response,
-        // hard-coded here for testing.
-        inspectionResponse.id = "a03F000000AbIJO";
-        postNewCase(context, inspectionResponse, "Test from app", "Pipeline failed inspection", newCaseResponseListener);
-        */
-
-
-    }
-
-    public static void testPostAttachment(final Context context) {
-        // This would normally be the InspectionStepResponse object's id property
-        String parentId = "a04F000000a6GuN";
-        // The photo, base-64-encoded.
-        String body = "/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAAAeAAD/7gAOQWRvYmUAZMAAAAAB/9sAhAAQCwsLDAsQDAwQFw8NDxcbFBAQFBsfFxcXFxcfHhcaGhoaFx4eIyUnJSMeLy8zMy8vQEBAQEBAQEBAQEBAQEBAAREPDxETERUSEhUUERQRFBoUFhYUGiYaGhwaGiYwIx4eHh4jMCsuJycnLis1NTAwNTVAQD9AQEBAQEBAQEBAQED/wAARCAJYAyADASIAAhEBAxEB/8QATQABAQAAAAAAAAAAAAAAAAAAAAYBAQEBAAAAAAAAAAAAAAAAAAAEBRABAAAAAAAAAAAAAAAAAAAAABEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AqgGMsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/9k=";
-        // Any arbitrary name
-        String attachmentName = "test1.jpg";
-
-        Response.Listener<JSONObject> listener = new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject jsonObject) {
-                try {
-                    Log.v(Constants.TAG, jsonObject.toString(5));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        SalesforceAPIManager.postAttachment(context, parentId, attachmentName, body, listener);
-    }
-
-    public static void testGetDocumentation(final Context context) {
-        /*
-        final InspectionStep inspectionStep = new InspectionStep();
-        inspectionStep.id = "a01F000000HOtaOIAT";
-
-        Response.Listener<JSONObject> listener = new Response.Listener<JSONObject>()
-        {
-            @Override
-            public void onResponse(JSONObject jsonObject)
-            {
-                try
-                {
-                    JSONObject record = jsonObject.getJSONArray("records").getJSONObject(0);
-                    Boolean hasDocumentation = !record.isNull("Inspections_Docs__r");
-                    if (hasDocumentation)
-                    {
-                        String link = record.getJSONObject("Inspections_Docs__r").getJSONArray("records").getJSONObject(0).getString("YouTube_Link__c");
-                        inspectionStep.documentationUrl = link;
-
-                    }
-                }
-                catch (JSONException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        SalesforceAPIManager.getInstance(this).getDocumentation(inspectionStep, listener);
-        */
-    }
-
 }

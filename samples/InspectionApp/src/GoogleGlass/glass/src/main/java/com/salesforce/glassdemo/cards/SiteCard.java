@@ -18,11 +18,6 @@ public class SiteCard extends Card {
         } else {
             setFootnote(site.address);
         }
-
-        //if (site.imageUrl != null && !site.imageUrl.isEmpty()) {
-        //    setImageLayout(ImageLayout.FULL);
-        //    new DownloadImageTask(this).execute(site.imageUrl);
-        //}
     }
 
     protected SiteCard(Context context) {

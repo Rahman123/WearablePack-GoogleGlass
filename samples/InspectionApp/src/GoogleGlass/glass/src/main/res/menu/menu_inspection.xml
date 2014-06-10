@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- TODO Icons for StartInspection menu -->
+<!-- TODO Strings for StartInspection menu -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/success"
+        android:title="Success"
+        />
+
+    <item
+        android:id="@+id/failure"
+        android:title="Failure"
+        />
+
+    <item
+        android:id="@+id/affirmative"
+        android:title="Affirmative"
+        />
+
+    <item
+        android:id="@+id/negative"
+        android:title="Negative"
+        />
+
+    <item
+        android:id="@+id/dictate"
+        android:title="Dictate"
+        />
+
+    <item
+        android:id="@+id/skip"
+        android:title="Skip"
+        />
+
+    <item
+        android:id="@+id/picture"
+        android:title="Picture"
+        />
+
+    <item
+        android:id="@+id/documentation"
+        android:title="Documentation"
+        />
+</menu>
