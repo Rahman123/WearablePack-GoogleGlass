@@ -23,11 +23,14 @@
         <name>CompactLayout</name>
     </types>
     <types>
+        <members>Case.InspectionResponse__c</members>
         <members>GlassSettings__c.App_Email__c</members>
         <members>GlassSettings__c.App_Id__c</members>
         <members>GlassSettings__c.Consumer_Key__c</members>
         <members>GlassSettings__c.Consumer_Secret__c</members>
         <members>GlassSettings__c.Redirect_URL__c</members>
+        <members>Inspection_Doc__kav.Inspection_Step__c</members>
+        <members>Inspection_Doc__kav.Video_Link__c</members>
         <members>Inspection_Response__c.Inspection__c</members>
         <members>Inspection_Response__c.Responder__c</members>
         <members>Inspection_Response__c.Status__c</members>
@@ -51,6 +54,7 @@
     </types>
     <types>
         <members>GlassSettings__c</members>
+        <members>Inspection_Doc__kav</members>
         <members>Inspection_Response__c</members>
         <members>Inspection_Site__c</members>
         <members>Inspection_Step_Response__c</members>
@@ -65,6 +69,7 @@
         <name>CustomTab</name>
     </types>
     <types>
+        <members>Inspection_Doc__kav-Inspection Doc Layout</members>
         <members>Inspection_Response__c-Inspection Response Layout</members>
         <members>Inspection_Site__c-Site Layout</members>
         <members>Inspection_Step_Response__c-Inspection Item Response Layout</members>
